@@ -48,11 +48,11 @@ def create_comment_tools(app_name: str, file_id_param: str):
         @require_google_service("drive", "drive_file")
         @handle_http_errors(create_func_name, service_type="drive")
         async def create_comment(
-            service, user_google_email: str, document_id: str, comment_content: str
+            service, user_google_email: str, document_id: str, comment_content: str, quoted_text: str = None
         ) -> str:
-            """Create a new comment on a Google Document."""
+            """Create a new comment on a Google Document. If quoted_text is provided, the comment will be anchored to that text in the document."""
             return await _create_comment_impl(
-                service, app_name, document_id, comment_content
+                service, app_name, document_id, comment_content, quoted_text
             )
 
         @require_google_service("drive", "drive_file")
@@ -92,11 +92,11 @@ def create_comment_tools(app_name: str, file_id_param: str):
         @require_google_service("drive", "drive_file")
         @handle_http_errors(create_func_name, service_type="drive")
         async def create_comment(
-            service, user_google_email: str, spreadsheet_id: str, comment_content: str
+            service, user_google_email: str, spreadsheet_id: str, comment_content: str, quoted_text: str = None
         ) -> str:
-            """Create a new comment on a Google Spreadsheet."""
+            """Create a new comment on a Google Spreadsheet. If quoted_text is provided, the comment will be anchored to that text."""
             return await _create_comment_impl(
-                service, app_name, spreadsheet_id, comment_content
+                service, app_name, spreadsheet_id, comment_content, quoted_text
             )
 
         @require_google_service("drive", "drive_file")
@@ -136,11 +136,11 @@ def create_comment_tools(app_name: str, file_id_param: str):
         @require_google_service("drive", "drive_file")
         @handle_http_errors(create_func_name, service_type="drive")
         async def create_comment(
-            service, user_google_email: str, presentation_id: str, comment_content: str
+            service, user_google_email: str, presentation_id: str, comment_content: str, quoted_text: str = None
         ) -> str:
-            """Create a new comment on a Google Presentation."""
+            """Create a new comment on a Google Presentation. If quoted_text is provided, the comment will be anchored to that text."""
             return await _create_comment_impl(
-                service, app_name, presentation_id, comment_content
+                service, app_name, presentation_id, comment_content, quoted_text
             )
 
         @require_google_service("drive", "drive_file")
@@ -244,12 +244,14 @@ async def _read_comments_impl(service, app_name: str, file_id: str) -> str:
 
 
 async def _create_comment_impl(
-    service, app_name: str, file_id: str, comment_content: str
+    service, app_name: str, file_id: str, comment_content: str, quoted_text: str = None
 ) -> str:
     """Implementation for creating a comment on any Google Workspace file."""
     logger.info(f"[create_{app_name}_comment] Creating comment in {app_name} {file_id}")
 
     body = {"content": comment_content}
+    if quoted_text:
+        body["quotedFileContent"] = {"mimeType": "text/html", "value": quoted_text}
 
     comment = await asyncio.to_thread(
         service.comments()
